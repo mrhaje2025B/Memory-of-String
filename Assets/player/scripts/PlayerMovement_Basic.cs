@@ -8,6 +8,7 @@ public class PlayerMovement_Basic : MonoBehaviour
     public float speed = 16f;
     public float acceleration_rate = 6f;
     public float stop_rate = 8f;
+    public bool channeling = false;
     public Transform foot;
     public float jump_power = 6.0f;
     public float fall_rate = 0.3f;
@@ -24,7 +25,7 @@ public class PlayerMovement_Basic : MonoBehaviour
 
     public bool OnGround()
     {
-        return (Physics2D.OverlapBox(foot.position, new Vector2(1.6f, 0.2f), 0f, groundlayer) != null) ? true : false;
+        return (Physics2D.OverlapBox(foot.position, new Vector2(1.02f, 0.2f), 0f, groundlayer) != null) ? true : false;
     }
 
     // Update is called once per frame
@@ -34,12 +35,12 @@ public class PlayerMovement_Basic : MonoBehaviour
         key_input = Input.GetAxisRaw("Horizontal");
         float targetspeed = key_input * speed;
 
-        if (targetspeed - body.linearVelocityX > 0)
+        if (targetspeed - body.linearVelocityX > 0 )
         {
             if (body.linearVelocityX >= 0) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * acceleration_rate, ForceMode2D.Force); }
             else { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * stop_rate, ForceMode2D.Force); }
         }
-        else if (targetspeed - body.linearVelocityX < 0)
+        else if (targetspeed - body.linearVelocityX < 0 )
         {
             if (body.linearVelocityX <= 0) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * acceleration_rate, ForceMode2D.Force); }
             else { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * stop_rate, ForceMode2D.Force); }
@@ -51,7 +52,7 @@ public class PlayerMovement_Basic : MonoBehaviour
     private void Update()
     {
         //มกวม
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetKeyDown(KeyCode.Space) && !channeling)
         {
             if (OnGround())
             {
