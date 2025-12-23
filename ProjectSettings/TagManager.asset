@@ -38,6 +38,9 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: rope
+    uniqueID: 1148266361
+    locked: 0
   - name: zansang
     uniqueID: 933408429
     locked: 0

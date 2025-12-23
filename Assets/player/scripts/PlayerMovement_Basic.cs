@@ -9,6 +9,7 @@ public class PlayerMovement_Basic : MonoBehaviour
     private Rigidbody2D body;
     private float key_input;
     public BoxCollider2D foot;
+    public PlayerMovementSkill skill;
 
     public bool channeling = false;
     public bool canmove = true;
@@ -64,12 +65,12 @@ public class PlayerMovement_Basic : MonoBehaviour
         if (targetspeed - body.linearVelocityX > 0 && canmove)
         {
             if (body.linearVelocityX >= 0) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.accel_rate, ForceMode2D.Force); }
-            else { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.stop_rate, ForceMode2D.Force); }
+            else if ( ( !skill.flying_b) || (Input.GetAxisRaw("Horizontal") > 0)) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.stop_rate, ForceMode2D.Force); }
         }
         else if (targetspeed - body.linearVelocityX < 0 && canmove )
         {
             if (body.linearVelocityX <= 0) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.accel_rate, ForceMode2D.Force); }
-            else { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.stop_rate, ForceMode2D.Force); }
+            else if ((!skill.flying_f) || (Input.GetAxisRaw("Horizontal") < 0)) { body.AddForce(Vector2.right * (targetspeed - body.linearVelocityX) * config.stop_rate, ForceMode2D.Force); }
         }
         //여기까지
 
@@ -79,12 +80,11 @@ public class PlayerMovement_Basic : MonoBehaviour
     {
         if (OnGround()) { last_onground_time = Time.time ;}
         
-        if (!candoublejump)
-        {
-            if (OnGround()) 
-            { 
-                candoublejump = true;
-            }
+        
+        if (OnGround()) 
+        { 
+            candoublejump = true;
+
         }
         
         //점프
@@ -92,7 +92,7 @@ public class PlayerMovement_Basic : MonoBehaviour
         {
             
             //print(OnGround());
-            if (Time.time - last_onground_time < 0.08f && canmove)
+            if (Time.time - last_onground_time < 0.1f && canmove)
             {
                 
                 body.linearVelocityY = config.jump_pow;
@@ -107,6 +107,7 @@ public class PlayerMovement_Basic : MonoBehaviour
                 candoublejump = false;
             }
         }
+
         /*
         if (Input.GetKeyUp(KeyCode.Space) && body.linearVelocityY > 0)
         {

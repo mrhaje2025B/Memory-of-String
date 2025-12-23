@@ -20,6 +20,9 @@ public class PlayerConfig : ScriptableObject
     public float rope_length;
     public float max_bullet_time;
     public float rope_move_speed = 60f;
+    public float bomb_cooddown = 2.5f;
+    public float bomb_speed_x = 32f;
+    public float bomb_speed_y = 12f;
 
     [Header("공격, 체력")]
     public int max_hair = 8;

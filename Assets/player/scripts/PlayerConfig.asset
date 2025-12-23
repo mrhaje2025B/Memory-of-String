@@ -19,12 +19,15 @@ MonoBehaviour:
   gravity: 2.5
   dash_length: 5
   dash_speed: 60
-  dash_cooldown: 0.8
+  dash_cooldown: 0.6
   spin_pow: 8
   spin_cooldown: 0.6
   ankor_speed: 60
   rope_length: 0
   max_bullet_time: 0
   rope_move_speed: 32
+  bomb_cooddown: 2.5
+  bomb_speed_x: 24
+  bomb_speed_y: 20
   max_hair: 8
   barrier_guage: 0

@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.XR;
 
 public class PlayerMovementSkill : MonoBehaviour
 {
@@ -18,13 +19,21 @@ public class PlayerMovementSkill : MonoBehaviour
     private Coroutine spin;
     private Coroutine blink;
     public bool spinning = false;
+
     public GameObject vanish_effect;
     public GameObject blink_effect;
     public GameObject arrow;
     public GameObject zansang_pre;
+    public GameObject bomb_pre;
+    private GameObject bomb;
     public Coroutine rope;
+    private GameObject ankor;
+    private LineRenderer rope_renderer;
 
     private bool ankorcontact;
+    public bool flying_f = false;
+    public bool flying_b = false;
+    private Coroutine boom;
 
     private bool xpressed = false;
     private bool cpressed = false;
@@ -35,6 +44,9 @@ public class PlayerMovementSkill : MonoBehaviour
         trans = GetComponent<Transform>();
         coli = GetComponent<Collider2D>();
         sprite = GetComponent<SpriteRenderer>();
+        rope_renderer = GetComponent<LineRenderer>();
+        rope_renderer.positionCount = 2;
+
     }
     IEnumerator Spin()
     {   
@@ -59,14 +71,14 @@ public class PlayerMovementSkill : MonoBehaviour
 
             body.linearVelocityX = config.dash_speed;
             body.linearVelocityY = 0;
-            body.gravityScale = 0;
+            body.gravityScale = 0;  
             Basic.canmove = false;
 
             GameObject zansang1 = Instantiate(zansang_pre, trans.position, trans.rotation);
             zansang1.GetComponent<ZansangScript>().SetSprite(sprite.sprite, trans.localScale);
             for (int i = 0; i<3; i++)
             {
-                yield return new WaitForFixedUpdate();
+                for (int j = 0; j < (int)(1 / Time.timeScale); j++) { yield return new WaitForFixedUpdate(); }
                 GameObject zansang = Instantiate(zansang_pre, trans.position, trans.rotation);
                 zansang.GetComponent<ZansangScript>().SetSprite(sprite.sprite, trans.localScale);
             }
@@ -89,7 +101,7 @@ public class PlayerMovementSkill : MonoBehaviour
             zansang1.GetComponent<ZansangScript>().SetSprite(sprite.sprite, trans.localScale);
             for (int i = 0; i < 3; i++)
             {
-                yield return new WaitForFixedUpdate();
+                for (int j = 0; j < (int)(1 / Time.timeScale); j++) { yield return new WaitForFixedUpdate(); }
                 GameObject zansang = Instantiate(zansang_pre, trans.position, trans.rotation);
                 zansang.GetComponent<ZansangScript>().SetSprite(sprite.sprite, trans.localScale);
             }
@@ -112,8 +124,8 @@ public class PlayerMovementSkill : MonoBehaviour
 
     IEnumerator Rope()
     {
-        GameObject ankor;
-        Time.timeScale = 0.3f;
+        Time.timeScale = 0.2f;
+        Time.fixedDeltaTime = 0.004f;
         yield return new WaitUntil(() => Input.GetKeyUp(KeyCode.X) || Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow));
 
         if (Input.GetKey(KeyCode.RightArrow)) 
@@ -121,6 +133,7 @@ public class PlayerMovementSkill : MonoBehaviour
             ankor = Instantiate(arrow, trans.position, Quaternion.Euler(0, 0, 0));
             ankor.GetComponent<ArrowScript>().player = this.gameObject;
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;
         }
 
         else if (Input.GetKey(KeyCode.UpArrow)) 
@@ -128,16 +141,19 @@ public class PlayerMovementSkill : MonoBehaviour
             ankor = Instantiate(arrow, trans.position, Quaternion.Euler(0, 0, 90));
             ankor.GetComponent<ArrowScript>().player = this.gameObject;
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;
         }
         else if (Input.GetKey(KeyCode.LeftArrow)) 
         {
             ankor = Instantiate(arrow, trans.position, Quaternion.Euler(0, 180, 0));
             ankor.GetComponent<ArrowScript>().player = this.gameObject;
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;
         }
         else 
         { 
             Time.timeScale = 1f;
+            Time.fixedDeltaTime = 0.02f;
             rope = null;
             yield break;
         }
@@ -181,9 +197,37 @@ public class PlayerMovementSkill : MonoBehaviour
         body.gravityScale = config.gravity;
         ankorcontact = false;
         Destroy(ankor);
+        ankor = null;
 
         yield return new WaitForSeconds(0.2f);
         rope = null;
+    }
+
+    IEnumerator Bomb()
+    {
+        if (anim.heading)
+        {
+            bomb = Instantiate(bomb_pre, trans.position + new Vector3(1.2f, -1.4f, 0), Quaternion.Euler(0, 0, 0));
+            flying_b = true;
+            flying_f = false;
+            body.linearVelocityX = -config.bomb_speed_x;
+            body.linearVelocityY = config.bomb_speed_y;
+        }
+        else
+        {
+            bomb = Instantiate(bomb_pre, trans.position + new Vector3(-1.2f, -1.4f, 0), Quaternion.Euler(0, 180, 0));
+            flying_f = true;
+            flying_b= false;
+            body.linearVelocityX = config.bomb_speed_x;
+            body.linearVelocityY = config.bomb_speed_y;
+        }
+        yield return new WaitForSeconds(0.2f);
+        Destroy(bomb);  
+        yield return new WaitForSeconds(config.bomb_cooddown-0.2f);
+        flying_f = false;
+        flying_b = false;
+        boom = null;
+        
     }
 
     void Start()
@@ -210,12 +254,27 @@ public class PlayerMovementSkill : MonoBehaviour
             blink = StartCoroutine(Dash());
         }
 
+        if (Input.GetKeyDown(KeyCode.V) && boom == null)
+        {
+            boom = StartCoroutine(Bomb());
+        }
+        if (body.linearVelocityX < config.movespeed && flying_f) { flying_f = false; }
+        if (body.linearVelocityX > -config.movespeed && flying_b) { flying_b = false;  }
 
-        if (xpressed && rope == null)   
+
+            if (xpressed && rope == null)   
         {
             xpressed = false;   
             rope = StartCoroutine(Rope()); 
         }
+
+        if (ankor != null)
+        {
+            rope_renderer.enabled = true;
+            rope_renderer.SetPosition(0, trans.position);
+            rope_renderer.SetPosition(1, ankor.GetComponent<Transform>().position);
+        }
+        else { rope_renderer.enabled = false; }
 
     }
 }
